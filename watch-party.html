@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Синхросеанс — смотрим вместе</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0D14;
+    --panel:#14161F;
+    --panel-2:#1B1E2B;
+    --line:#282C3D;
+    --text:#F2EFE6;
+    --text-dim:#9A9CAB;
+    --gold:#E8B84B;
+    --teal:#3FA7A0;
+    --red:#E4574A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.035) 1px, transparent 0);
+    background-size: 3px 3px;
+    pointer-events:none;
+    z-index:0;
+  }
+  .display{font-family:'Fraunces',serif;}
+
+  /* ---------- LANDING ---------- */
+  #landing{
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+    position:relative; z-index:1;
+  }
+  .reel{ width:100%; max-width:460px; }
+  .reel-mark{ display:flex; align-items:center; gap:10px; margin-bottom:28px; }
+  .reel-mark .dot{width:10px;height:10px;border-radius:50%;background:var(--gold);}
+  .reel-mark span{font-size:13px; letter-spacing:0.02em; color:var(--text-dim);}
+  h1.hero{ font-size:clamp(32px,7vw,48px); line-height:1.08; font-weight:600; margin:0 0 10px 0; }
+  h1.hero em{ font-style:italic; color:var(--gold); }
+  .sub{ color:var(--text-dim); font-size:15px; line-height:1.55; margin:0 0 28px 0; max-width:40ch; }
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:22px; margin-bottom:14px;
+  }
+  .panel h3{ margin:0 0 4px 0; font-size:14px; font-weight:600; }
+  .panel p.hint{ margin:0 0 16px 0; font-size:13px; color:var(--text-dim); line-height:1.5; }
+  .row{display:flex; gap:10px;}
+  input[type=text], textarea{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    border-radius:8px;
+    padding:12px 14px;
+    font-size:14px;
+    font-family:'Inter',sans-serif;
+    outline:none;
+    min-width:0;
+    resize:none;
+  }
+  textarea{ font-family:'SF Mono','Consolas',monospace; font-size:12px; line-height:1.5; height:92px; }
+  input[type=text]:focus, textarea:focus{border-color:var(--gold);}
+  input[type=text]::placeholder, textarea::placeholder{color:#5C5F72;}
+  button{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:14px;
+    border:none; border-radius:8px; padding:12px 18px; cursor:pointer;
+    transition:transform .12s ease, opacity .12s ease; white-space:nowrap;
+  }
+  button:active{transform:scale(0.97);}
+  button:disabled{opacity:0.5; cursor:default;}
+  .btn-gold{background:var(--gold); color:#1A1200;}
+  .btn-gold:hover{opacity:0.92;}
+  .btn-ghost{background:transparent; color:var(--text); border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--text-dim);}
+  .btn-block{width:100%; margin-top:10px;}
+  .divider{ display:flex; align-items:center; gap:12px; margin:18px 0; color:#4B4E60; font-size:12px; }
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line);}
+  .err{color:var(--red); font-size:13px; margin-top:10px; display:none;}
+  .step-label{
+    font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--gold); margin-bottom:8px;
+  }
+  .spinner-row{ display:flex; align-items:center; gap:10px; font-size:13px; color:var(--text-dim); margin-top:10px; }
+  .spinner{
+    width:14px; height:14px; border-radius:50%;
+    border:2px solid var(--line); border-top-color:var(--gold);
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .back-link{
+    background:none; border:none; color:var(--text-dim); font-size:13px;
+    padding:0; margin-bottom:14px; cursor:pointer;
+  }
+  .back-link:hover{color:var(--text);}
+
+  /* ---------- ROOM ---------- */
+  #room{display:none; min-height:100vh; position:relative; z-index:1;}
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 22px; border-bottom:1px solid var(--line); gap:12px; flex-wrap:wrap;
+  }
+  .topbar .brand{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text-dim);}
+  .topbar .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);}
+  .presence{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text-dim);}
+  .presence .pdot{width:7px;height:7px;border-radius:50%;background:var(--teal); box-shadow:0 0 0 3px rgba(63,167,160,0.18);}
+
+  .layout{ display:flex; gap:0; height:calc(100vh - 57px); }
+  .stage{ flex:1; display:flex; flex-direction:column; padding:20px; gap:16px; min-width:0; }
+  .loadbar{display:flex; gap:8px;}
+  .loadbar input{flex:1;}
+  .video-wrap{
+    flex:1; background:#000; border-radius:14px; overflow:hidden;
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    position:relative; min-height:220px;
+  }
+  .video-wrap iframe, .video-wrap video{ width:100%; height:100%; border:0; display:block; }
+  .placeholder{ text-align:center; color:var(--text-dim); padding:30px; font-size:14px; }
+  .placeholder .display{font-size:22px; color:var(--text); margin-bottom:6px;}
+
+  .sidebar{
+    width:320px; flex-shrink:0; border-left:1px solid var(--line);
+    display:flex; flex-direction:column; background:rgba(20,22,31,0.5);
+  }
+  .sidebar-head{
+    padding:16px 18px; border-bottom:1px solid var(--line);
+    font-size:13px; font-weight:600; color:var(--text-dim);
+    text-transform:uppercase; letter-spacing:0.06em;
+  }
+  .chat-log{ flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
+  .msg{max-width:100%;}
+  .msg .who{font-size:12px; font-weight:600; margin-bottom:2px;}
+  .msg .who.me{color:var(--gold);}
+  .msg .who.them{color:var(--teal);}
+  .msg .txt{font-size:14px; line-height:1.4; color:var(--text);}
+  .chat-input{ display:flex; gap:8px; padding:14px; border-top:1px solid var(--line); }
+  .chat-input input{padding:10px 12px; font-size:14px;}
+  .chat-input button{padding:10px 14px;}
+
+  @media (max-width: 820px){
+    .layout{flex-direction:column; height:auto;}
+    .sidebar{width:100%; border-left:none; border-top:1px solid var(--line); height:280px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="landing">
+  <div class="reel" id="reel">
+
+    <!-- STAGE: choose -->
+    <div id="stageChoose">
+      <div class="reel-mark"><div class="dot"></div><span>СИНХРОСЕАНС</span></div>
+      <h1 class="hero display">Смотрите <em>одно и то же</em>, из разных мест.</h1>
+      <p class="sub">Прямое P2P-соединение между двумя браузерами — без серверов и аккаунтов. Один создаёт комнату, другой подключается по короткому коду.</p>
+
+      <div class="panel">
+        <h3>Новая комната</h3>
+        <p class="hint">Вы получите код — отправьте его другу любым способом (в мессенджере, почте — как угодно).</p>
+        <button class="btn-gold btn-block" id="createBtn">Создать комнату</button>
+      </div>
+
+      <div class="divider">или у вас уже есть код</div>
+
+      <div class="panel">
+        <h3>Присоединиться</h3>
+        <p class="hint">Вставьте код, который прислал друг.</p>
+        <textarea id="offerInput" placeholder="Вставьте код приглашения сюда…"></textarea>
+        <button class="btn-gold btn-block" id="joinBtn">Далее</button>
+        <div class="err" id="joinErr"></div>
+      </div>
+    </div>
+
+    <!-- STAGE: host waiting for answer code -->
+    <div id="stageHost" style="display:none;">
+      <button class="back-link" id="hostBack">← Назад</button>
+      <div class="reel-mark"><div class="dot"></div><span>СИНХРОСЕАНС</span></div>
+      <div class="panel">
+        <div class="step-label">Шаг 1 из 2</div>
+        <h3>Отправьте этот код другу</h3>
+        <p class="hint">Скопируйте и отправьте целиком — в чате, почте, где угодно.</p>
+        <textarea id="offerOutput" readonly></textarea>
+        <button class="btn-ghost btn-block" id="copyOfferBtn">Скопировать код</button>
+      </div>
+      <div class="panel">
+        <div class="step-label">Шаг 2 из 2</div>
+        <h3>Вставьте ответный код друга</h3>
+        <p class="hint">Когда друг пришлёт код в ответ — вставьте его сюда.</p>
+        <textarea id="answerInput" placeholder="Ответный код от друга…"></textarea>
+        <button class="btn-gold btn-block" id="connectBtn">Подключиться</button>
+        <div class="err" id="hostErr"></div>
+        <div class="spinner-row" id="hostSpinner" style="display:none;"><div class="spinner"></div>Устанавливаем соединение…</div>
+      </div>
+    </div>
+
+    <!-- STAGE: guest — show generated answer code -->
+    <div id="stageGuest" style="display:none;">
+      <button class="back-link" id="guestBack">← Назад</button>
+      <div class="reel-mark"><div class="dot"></div><span>СИНХРОСЕАНС</span></div>
+      <div class="panel">
+        <div class="step-label">Последний шаг</div>
+        <h3>Отправьте этот код обратно другу</h3>
+        <p class="hint">Как только он вставит его у себя — вы автоматически окажетесь в одной комнате.</p>
+        <textarea id="answerOutput" readonly></textarea>
+        <button class="btn-ghost btn-block" id="copyAnswerBtn">Скопировать код</button>
+        <div class="spinner-row"><div class="spinner"></div>Ждём, пока друг подключится…</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="room">
+  <div class="topbar">
+    <div class="brand"><div class="dot"></div>Синхросеанс</div>
+    <div class="presence"><div class="pdot"></div><span id="presenceLabel">подключено</span></div>
+  </div>
+
+  <div class="layout">
+    <div class="stage">
+      <div class="loadbar">
+        <input type="text" id="videoUrl" placeholder="Вставьте ссылку на YouTube или .mp4">
+        <button class="btn-gold" id="loadBtn">Включить</button>
+      </div>
+      <div class="video-wrap" id="videoWrap">
+        <div class="placeholder">
+          <div class="display">Экран пока пуст</div>
+          вставьте ссылку выше, чтобы начать сеанс
+        </div>
+      </div>
+    </div>
+    <div class="sidebar">
+      <div class="sidebar-head">Чат</div>
+      <div class="chat-log" id="chatLog"></div>
+      <div class="chat-input">
+        <input type="text" id="chatInput" placeholder="Написать...">
+        <button class="btn-gold" id="sendBtn">Отпр.</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const ICE_SERVERS = [
+    {urls:'stun:stun.l.google.com:19302'},
+    {urls:'stun:stun1.l.google.com:19302'}
+  ];
+
+  let pc = null;
+  let dc = null;
+  let ytPlayer = null;
+  let ytReady = false;
+  let htmlVideo = null;
+  let mediaType = null; // 'youtube' | 'file'
+  let suppressLocalEvent = false;
+  let haveLoadedVideo = false;
+
+  function show(id){
+    ['stageChoose','stageHost','stageGuest'].forEach(s=>{
+      document.getElementById(s).style.display = (s===id) ? 'block' : 'none';
+    });
+  }
+
+  // Wait for ICE gathering to finish so the SDP blob is self-contained
+  // (no separate trickle-candidate exchange needed — keeps this to a
+  // single copy-paste round trip per side).
+  function waitIceComplete(peer){
+    return new Promise(resolve=>{
+      if(peer.iceGatheringState === 'complete'){ resolve(); return; }
+      const check = ()=>{
+        if(peer.iceGatheringState === 'complete'){
+          peer.removeEventListener('icegatheringstatechange', check);
+          resolve();
+        }
+      };
+      peer.addEventListener('icegatheringstatechange', check);
+      // safety timeout — proceed with whatever candidates we have so it
+      // never hangs forever on an unusual network
+      setTimeout(resolve, 4000);
+    });
+  }
+
+  function encodeBlob(obj){
+    return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+  }
+  function decodeBlob(str){
+    return JSON.parse(decodeURIComponent(escape(atob(str.trim()))));
+  }
+
+  function setupDataChannel(){
+    dc.onopen = ()=>{
+      document.getElementById('landing').style.display = 'none';
+      document.getElementById('room').style.display = 'block';
+      document.getElementById('presenceLabel').textContent = 'друг подключён';
+      // if we already picked a video before the peer connected, let them catch up
+      if(haveLoadedVideo) sendVideoState({}, true);
+    };
+    dc.onclose = ()=>{
+      document.getElementById('presenceLabel').textContent = 'друг отключился';
+    };
+    dc.onmessage = (e)=>{
+      let msg;
+      try{ msg = JSON.parse(e.data); }catch(err){ return; }
+      if(msg.type === 'video') applyRemoteState(msg);
+      else if(msg.type === 'chat') renderIncomingChat(msg);
+    };
+  }
+
+  // ---------- create room (host) ----------
+  document.getElementById('createBtn').onclick = async ()=>{
+    pc = new RTCPeerConnection({iceServers: ICE_SERVERS});
+    dc = pc.createDataChannel('sync');
+    setupDataChannel();
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    await waitIceComplete(pc);
+
+    document.getElementById('offerOutput').value = encodeBlob(pc.localDescription);
+    show('stageHost');
+  };
+  document.getElementById('hostBack').onclick = ()=>{
+    if(pc) pc.close();
+    pc = null; dc = null;
+    show('stageChoose');
+  };
+  document.getElementById('copyOfferBtn').onclick = ()=>{
+    const ta = document.getElementById('offerOutput');
+    ta.select();
+    navigator.clipboard.writeText(ta.value).then(()=>flashCopied('copyOfferBtn'));
+  };
+  document.getElementById('connectBtn').onclick = async ()=>{
+    const err = document.getElementById('hostErr');
+    err.style.display = 'none';
+    const raw = document.getElementById('answerInput').value.trim();
+    if(!raw){ err.textContent = 'Вставьте ответный код от друга.'; err.style.display = 'block'; return; }
+    document.getElementById('hostSpinner').style.display = 'flex';
+    try{
+      const answer = decodeBlob(raw);
+      await pc.setRemoteDescription(answer);
+      // dc.onopen (set up earlier) will move us into the room automatically
+    }catch(e){
+      document.getElementById('hostSpinner').style.display = 'none';
+      err.textContent = 'Код не распознан. Проверьте, что скопировали его полностью.';
+      err.style.display = 'block';
+    }
+  };
+
+  // ---------- join room (guest) ----------
+  document.getElementById('joinBtn').onclick = async ()=>{
+    const err = document.getElementById('joinErr');
+    err.style.display = 'none';
+    const raw = document.getElementById('offerInput').value.trim();
+    if(!raw){ err.textContent = 'Вставьте код приглашения.'; err.style.display = 'block'; return; }
+
+    let offer;
+    try{ offer = decodeBlob(raw); }
+    catch(e){ err.textContent = 'Код не распознан. Проверьте, что скопировали его полностью.'; err.style.display = 'block'; return; }
+
+    pc = new RTCPeerConnection({iceServers: ICE_SERVERS});
+    pc.ondatachannel = (e)=>{ dc = e.channel; setupDataChannel(); };
+
+    try{
+      await pc.setRemoteDescription(offer);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await waitIceComplete(pc);
+      document.getElementById('answerOutput').value = encodeBlob(pc.localDescription);
+      show('stageGuest');
+    }catch(e){
+      err.textContent = 'Не удалось создать ответ. Попробуйте ещё раз.';
+      err.style.display = 'block';
+    }
+  };
+  document.getElementById('guestBack').onclick = ()=>{
+    if(pc) pc.close();
+    pc = null; dc = null;
+    show('stageChoose');
+  };
+  document.getElementById('copyAnswerBtn').onclick = ()=>{
+    const ta = document.getElementById('answerOutput');
+    ta.select();
+    navigator.clipboard.writeText(ta.value).then(()=>flashCopied('copyAnswerBtn'));
+  };
+
+  function flashCopied(btnId){
+    const b = document.getElementById(btnId);
+    const old = b.textContent;
+    b.textContent = 'Скопировано ✓';
+    setTimeout(()=>{ b.textContent = old; }, 1400);
+  }
+
+  // ---------- video ----------
+  function extractYouTubeId(url){
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=)([\w-]{11})/,
+      /(?:youtu\.be\/)([\w-]{11})/,
+      /(?:youtube\.com\/embed\/)([\w-]{11})/,
+      /(?:youtube\.com\/shorts\/)([\w-]{11})/
+    ];
+    for(const p of patterns){
+      const m = url.match(p);
+      if(m) return m[1];
+    }
+    return null;
+  }
+
+  document.getElementById('loadBtn').onclick = ()=>{
+    const url = document.getElementById('videoUrl').value.trim();
+    if(!url) return;
+    const ytId = extractYouTubeId(url);
+    const payload = {
+      videoUrl: url,
+      mediaType: ytId ? 'youtube' : 'file',
+      ytId: ytId,
+      isPlaying: false,
+      currentTime: 0
+    };
+    buildPlayer(payload);
+    haveLoadedVideo = true;
+    sendVideoState(payload, true);
+  };
+  document.getElementById('videoUrl').addEventListener('keydown', e=>{
+    if(e.key==='Enter') document.getElementById('loadBtn').click();
+  });
+
+  function buildPlayer(state){
+    if(state.mediaType === 'youtube'){ buildYouTube(state.ytId); }
+    else if(state.mediaType === 'file'){ buildFileVideo(state.videoUrl); }
+  }
+
+  function buildYouTube(ytId){
+    const wrap = document.getElementById('videoWrap');
+    wrap.innerHTML = '<div id="ytplayer"></div>';
+    mediaType = 'youtube';
+    ytReady = false;
+    if(window.YT && window.YT.Player){
+      createYTPlayer(ytId);
+    } else {
+      window.onYouTubeIframeAPIReady = ()=> createYTPlayer(ytId);
+      if(!document.getElementById('ytapi')){
+        const tag = document.createElement('script');
+        tag.id = 'ytapi';
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.body.appendChild(tag);
+      }
+    }
+  }
+  function createYTPlayer(ytId){
+    ytPlayer = new YT.Player('ytplayer', {
+      videoId: ytId,
+      width:'100%', height:'100%',
+      playerVars:{ rel:0, modestbranding:1 },
+      events:{
+        onReady: ()=>{ ytReady = true; },
+        onStateChange: onYTStateChange,
+        onError: ()=>{}
+      }
+    });
+  }
+  function onYTStateChange(e){
+    if(suppressLocalEvent) return;
+    if(e.data === YT.PlayerState.PLAYING){
+      sendVideoState({isPlaying:true, currentTime: ytPlayer.getCurrentTime()});
+    } else if(e.data === YT.PlayerState.PAUSED){
+      sendVideoState({isPlaying:false, currentTime: ytPlayer.getCurrentTime()});
+    }
+  }
+
+  function buildFileVideo(url){
+    const wrap = document.getElementById('videoWrap');
+    wrap.innerHTML = '<video id="filevideo" controls></video>';
+    htmlVideo = document.getElementById('filevideo');
+    htmlVideo.src = url;
+    mediaType = 'file';
+    htmlVideo.addEventListener('play', ()=>{
+      if(suppressLocalEvent) return;
+      sendVideoState({isPlaying:true, currentTime: htmlVideo.currentTime});
+    });
+    htmlVideo.addEventListener('pause', ()=>{
+      if(suppressLocalEvent) return;
+      sendVideoState({isPlaying:false, currentTime: htmlVideo.currentTime});
+    });
+    htmlVideo.addEventListener('seeked', ()=>{
+      if(suppressLocalEvent) return;
+      sendVideoState({isPlaying: !htmlVideo.paused, currentTime: htmlVideo.currentTime});
+    });
+  }
+
+  let lastSentState = {mediaType:null, videoUrl:null, ytId:null, isPlaying:false, currentTime:0};
+  function sendVideoState(partial, isFullLoad){
+    lastSentState = Object.assign({}, lastSentState, partial);
+    if(!dc || dc.readyState !== 'open') return;
+    dc.send(JSON.stringify(Object.assign({type:'video', ts: Date.now(), isFullLoad: !!isFullLoad}, lastSentState)));
+  }
+
+  function applyRemoteState(state){
+    if(state.mediaType && state.mediaType !== mediaType){
+      buildPlayer(state);
+      haveLoadedVideo = true;
+    }
+    const elapsed = state.isPlaying ? (Date.now() - state.ts) / 1000 : 0;
+    const targetTime = (state.currentTime || 0) + elapsed;
+
+    suppressLocalEvent = true;
+    if(state.mediaType === 'youtube' && ytReady && ytPlayer && typeof ytPlayer.getCurrentTime === 'function'){
+      const cur = ytPlayer.getCurrentTime();
+      if(Math.abs(cur - targetTime) > 1.5) ytPlayer.seekTo(targetTime, true);
+      if(state.isPlaying) ytPlayer.playVideo(); else ytPlayer.pauseVideo();
+    } else if(state.mediaType === 'file' && htmlVideo && htmlVideo.readyState >= 1){
+      if(Math.abs(htmlVideo.currentTime - targetTime) > 1.5) htmlVideo.currentTime = targetTime;
+      if(state.isPlaying) htmlVideo.play().catch(()=>{}); else htmlVideo.pause();
+    }
+    setTimeout(()=>{ suppressLocalEvent = false; }, 500);
+  }
+
+  // A P2P data channel has no built-in retry loop like polling did, so we
+  // nudge continuous drift-correction: every few seconds, if we're the one
+  // "driving" playback state, resend our own live position so the peer's
+  // player quietly self-corrects even if nothing else changed.
+  setInterval(()=>{
+    if(!dc || dc.readyState !== 'open' || !mediaType) return;
+    let cur = null;
+    let playing = null;
+    if(mediaType === 'youtube' && ytReady && ytPlayer && typeof ytPlayer.getCurrentTime === 'function'){
+      cur = ytPlayer.getCurrentTime();
+      playing = ytPlayer.getPlayerState && ytPlayer.getPlayerState() === 1;
+    } else if(mediaType === 'file' && htmlVideo){
+      cur = htmlVideo.currentTime;
+      playing = !htmlVideo.paused;
+    }
+    if(cur !== null && !suppressLocalEvent){
+      sendVideoState({isPlaying: playing, currentTime: cur});
+    }
+  }, 4000);
+
+  // ---------- chat ----------
+  function addChatBubble(text, mine){
+    const log = document.getElementById('chatLog');
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.innerHTML = `<div class="who ${mine?'me':'them'}">${mine?'Вы':'Друг'}</div><div class="txt"></div>`;
+    div.querySelector('.txt').textContent = text;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+  function renderIncomingChat(msg){ addChatBubble(msg.text, false); }
+  function sendChat(){
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if(!text) return;
+    input.value = '';
+    addChatBubble(text, true);
+    if(dc && dc.readyState === 'open'){
+      dc.send(JSON.stringify({type:'chat', text}));
+    }
+  }
+  document.getElementById('sendBtn').onclick = sendChat;
+  document.getElementById('chatInput').addEventListener('keydown', e=>{
+    if(e.key==='Enter') sendChat();
+  });
+
+})();
+</script>
+</body>
+</html>
